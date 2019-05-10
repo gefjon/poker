@@ -2,13 +2,27 @@
   (:use :cl :iterate))
 (in-package :poker)
 
+(deftype suit ()
+  '(member
+    :heart
+    :diamond
+    :club
+    :spade))
+
+(deftype value ()
+  '(integer 2 14))
+
 (defclass card ()
   ((suit :initarg :suit
-         :accessor card-suit)
+         :accessor card-suit
+         :type suit)
    (value :initarg :value
-          :accessor card-value)))
+          :accessor card-value
+          :type value)))
 
 (defun make-card (suit value)
+  (check-type suit suit)
+  (check-type value value)
   (make-instance 'card
                  :suit suit
                  :value value))
@@ -46,7 +60,8 @@
 
 (defclass tuple (valuation)
   ((value :initarg :value
-          :accessor tuple-value)))
+          :accessor tuple-value
+          :type value)))
 
 (defclass 4-of-a-kind (tuple)
   ())
@@ -62,9 +77,11 @@
 
 (defclass full-house (valuation)
   ((3-of :initarg :3-of
-         :accessor full-house-3-of)
+         :accessor full-house-3-of
+         :type value)
    (2-of :initarg :2-of
-         :accessor full-house-2-of)))
+         :accessor full-house-2-of
+         :type value)))
 
 (defun full-house-p (hand)
   (typep hand 'full-house))
@@ -77,9 +94,11 @@
 
 (defclass 2-pair (valuation)
   ((higher :initarg :higher
-           :accessor 2-pair-higher)
+           :accessor 2-pair-higher
+           :type value)
    (lower :initarg :lower
-          :accessor 2-pair-lower)))
+          :accessor 2-pair-lower
+          :type value)))
 
 (defun 2-pair-p (hand)
   (typep hand '2-pair))
@@ -92,7 +111,8 @@
 
 (defclass straight (valuation)
   ((top :initarg :top
-        :accessor straight-top)))
+        :accessor straight-top
+        :type value)))
 
 (defun straightp (hand)
   (typep hand 'straight))
@@ -103,10 +123,16 @@
 (defun straight-flush-p (hand)
   (typep hand 'straight-flush))
 
+(declaim (ftype (function (valuation)
+                          card)
+                valuation-high-card))
 (defun valuation-high-card (poker-hand)
   (with-slots (cards) poker-hand
     (aref cards 0)))
 
+(declaim (ftype (function (hand)
+                          valuation)
+                make-poker-hand))
 (defun make-poker-hand (cards)
   (let* ((vector (coerce cards 'hand))
          (sorted (sort vector #'> :key #'card-value)))
@@ -114,16 +140,23 @@
         (let* ((flush-suit (hand-is-a-flush sorted))
                (straight-top (hand-is-a-straight sorted)))
           (cond ((and flush-suit straight-top)
-                 (make-instance 'straight-flush
-                                :top straight-top
-                                :cards sorted))
-                (flush-suit (make-instance 'flush
-                                           :cards sorted))
-                (straight-top (make-instance 'straight
-                                             :top straight-top
-                                             :cards sorted))
-                (t (make-instance 'valuation :cards sorted)))))))
+                 (the valuation
+                      (make-instance 'straight-flush
+                                     :top straight-top
+                                     :cards sorted)))
+                (flush-suit (the valuation
+                                 (make-instance 'flush
+                                                      :cards sorted)))
+                (straight-top (the valuation
+                                   (make-instance 'straight
+                                                           :top straight-top
+                                                           :cards sorted)))
+                (t (the valuation
+                        (make-instance 'valuation :cards sorted))))))))
 
+(declaim (ftype (function (hand)
+                          list)
+                value-histogram-for-hand))
 (defun value-histogram-for-hand (hand)
   (declare (type hand hand))
   (iterate (for card in-vector hand)
@@ -135,40 +168,55 @@
                     (acons value (1+ old-count) histogram))))
            (finally (return histogram))))
 
+(declaim (ftype (function (hand)
+                          (or null valuation))
+                hand-is-a-tuple))
 (defun hand-is-a-tuple (hand)
-  (declare (type hand hand))
   (let ((histogram (value-histogram-for-hand hand)))
     (let ((4-of (car (rassoc 4 histogram)))
           (3-of (car (rassoc 3 histogram)))
           (2-of (car (rassoc 2 histogram))))
-      (cond (4-of (make-instance '4-of-a-kind
-                                 :value 4-of
-                                 :cards hand))
-            ((and 3-of 2-of) (make-instance 'full-house
-                                            :3-of 3-of
-                                            :2-of 2-of
-                                            :cards hand))
+      (cond (4-of (the valuation
+                       (make-instance '4-of-a-kind
+                                      :value 4-of
+                                      :cards hand)))
+            ((and 3-of 2-of) (the valuation
+                                  (make-instance 'full-house
+                                                 :3-of 3-of
+                                                 :2-of 2-of
+                                                 :cards hand)))
             (2-of (flet ((same-value-p (pair)
                            (= (car pair) 2-of)))
                     (let* ((hand-except-first-pair (remove-if #'same-value-p
-                                                             histogram))
+                                                              histogram))
                            (higher-pair (car
                                          (rassoc 2 hand-except-first-pair))))
-                      (if higher-pair (make-instance '2-pair
-                                                     :lower 2-of
-                                                     :higher higher-pair
-                                                     :cards hand)
-                          (make-instance 'pair
-                                         :value 2-of
-                                         :cards hand)))))))))
+                      (if higher-pair
+                          (the valuation
+                               (make-instance '2-pair
+                                              :lower 2-of
+                                              :higher higher-pair
+                                              :cards hand))
+                          (the valuation
+                               (make-instance 'pair
+                                              :value 2-of
+                                              :cards hand))))))
+            (t nil)))))
 
+(declaim (ftype (function (hand)
+                          (or null suit))
+                hand-is-a-flush))
 (defun hand-is-a-flush (hand)
   (declare (type hand hand))
-  (dotimes (i 1 (card-suit (aref hand 0)))
+  (dotimes (i 1 (the suit
+                     (card-suit (aref hand 0))))
     (unless (eq (card-suit (aref hand i))
                 (card-suit (aref hand (1+ i))))
       (return nil))))
 
+(declaim (ftype (function (hand)
+                          (or null value))
+                hand-is-a-straight))
 (defun hand-is-a-straight (hand)
   ;; note: hand is already sorted by the time it gets here
   (declare (type hand hand))
@@ -178,21 +226,36 @@
                   low-value))
       top-value)))
 
+(declaim (ftype (function (valuation) value)
+                valuation-high-card-value))
 (defun valuation-high-card-value (valuation)
-  (card-value (valuation-high-card valuation)))
+  (the value
+       (card-value (valuation-high-card valuation))))
 
+(deftype winner ()
+  '(member :left :right :tie))
+
+(declaim (ftype (function (* * &key
+                             (:key function)
+                             (:fallthrough (or null function)))
+                          winner)
+                compare))
 (defun compare (left right &key (key #'identity) fallthrough)
-  ;; mostly, i don't use the fallthrough, which is probably good,
-  ;; because it leads to a lot of recursive calls
+  ;; a lot of cases don't list a fallthrough, so it's basically
+  ;; useless, but i've added it for clarity when there's an obvious
+  ;; value
   (let ((left-v (funcall key left))
         (right-v (funcall key right)))
     (cond ((> left-v right-v) :left)
           ((< left-v right-v) :right)
-          ((= left-v right-v) (if fallthrough
-                                  (compare left right :key fallthrough)
-                                  :tie)))))
+          (t (if fallthrough
+                 (compare left right :key fallthrough)
+                 :tie)))))
 
+(declaim (ftype (function (valuation valuation) winner)
+                compare-poker-hands))
 (defun compare-poker-hands (left right)
+  (declare (type valuation left right))
   (cond ((and (straight-flush-p left)
               (straight-flush-p right))
          (compare left right :key #'valuation-high-card-value))
