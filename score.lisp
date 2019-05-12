@@ -8,6 +8,12 @@
 (in-package :poker.score)
 
 (defmacro define-score-type (name &body bytes-in-increasing-order)
+  "Define a type named NAME which encodes a score as a bignum, with
+fields for each of the BYTES-IN-INCREASING-ORDER. Also, for each
+symbol FOO in BYTES-IN-INCREASING-ORDER, define functions FOO-LDB and
+FOO-DPB, which act analogously to LDB and DPB except that they do not
+take a bytespec; and *FOO-BYTESPEC*, which holds a bytespec that can
+be passed to LDB and DPB."
   (let ((fill-pointer 0))
     (labels ((sym-to-string
                  (sym-or-string)
@@ -61,6 +67,8 @@
   '(vector card 5))
 
 (defun sort-hand (hand)
+  "sort HAND into a (VECTOR CARD 5), where the highest-faced card is
+at (AREF HAND 0) and the lowest-faced card is at (AREF HAND 4)"
   (sort (coerce hand 'hand) #'> :key #'card-face))
 
 (defun sorted-hand-high-card (sorted-hand)
@@ -73,6 +81,8 @@
                           list)
                 face-histogram-for-hand))
 (defun face-histogram-for-hand (hand)
+  "Return an alist whose CARs are face-values and CDRs are number of
+appearances in HAND"
   (declare (type hand hand))
   (iterate (for card in-vector hand)
            (with histogram = '())
@@ -98,6 +108,9 @@
       (return nil))))
 
 (defun find-higher-pair (existing-pair-face histogram)
+  "If HISTOGRAM contains two distinct pairs, given the lower one as
+EXISTING-PAIR-FACE, find the higher pair's face value. Otherwise,
+return NIL"
   (when (and existing-pair-face histogram)
     (flet ((same-face-p (pair)
              (= (car pair) existing-pair-face)))
@@ -109,6 +122,8 @@
                           (or null face))
                 hand-flush-value))
 (defun hand-flush-value (hand)
+  "If HAND (which must be sorted) is a flush, return the face-value
+for the flush place of a score, or NIL otherwise."
   (dotimes (i 4
             (the face
                  (card-face (sorted-hand-high-card hand))))
@@ -120,6 +135,10 @@
                           score)
                 hand-score))
 (defun hand-score (hand)
+  "Calculate an integer representing the score of HAND. For any two
+poker hands A and B, A beats B => (> (HAND-SCORE A) (HAND-SCORE B)), A
+ties B => (= (HAND-SCORE A) (HAND-SCORE B)), and B beats A
+=> (< (HAND-SCORE A) (HAND-SCORE B))."
   (let* ((sorted (sort-hand hand))
          (high-card (card-face (aref sorted 0)))
          (2nd-card (card-face (aref sorted 1)))

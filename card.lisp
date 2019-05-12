@@ -17,7 +17,12 @@
     :club
     :spade))
 
-(defparameter *face-byte-width* 8)
+(eval-when (:compile-toplevel)
+  (defparameter *face-byte-width* 8
+    "Face values are represented internally as a byte, which allows
+  scores to be represented as a byte-vector, or, interchangably, a
+  bignum."))
+
 (deftype face ()
   `(unsigned-byte ,*face-byte-width*))
 
