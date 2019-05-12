@@ -32,16 +32,17 @@ be passed to LDB and DPB."
                      (deposit-byte (symbol-concat byte "-DPB"))
                      ;; (set-byte (symbol-concat "SET-" byte))
                      (bytespec (symbol-concat "*" byte "-BYTESPEC*")))
-                 `(progn
-                    (defvar ,bytespec
-                      (byte ,*face-byte-width* ,fill-pointer))
-                    ,(setf fill-pointer
-                           (+ fill-pointer
-                              *face-byte-width*))
-                    (defun ,load-byte (score)
-                      (ldb ,bytespec score))
-                    (defun ,deposit-byte (newbyte score)
-                      (dpb newbyte ,bytespec score))))))
+                 (prog1
+                     `(progn
+                        (defvar ,bytespec
+                          (byte ,*face-byte-width* ,fill-pointer))
+                        (defun ,load-byte (score)
+                          (ldb ,bytespec score))
+                        (defun ,deposit-byte (newbyte score)
+                          (dpb newbyte ,bytespec score)))
+                    (setf fill-pointer
+                          (+ fill-pointer
+                             *face-byte-width*))))))
       
       `(progn 
          ,@(map 'list #'expand-byte-name bytes-in-increasing-order)
