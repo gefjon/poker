@@ -1,5 +1,5 @@
 (defpackage :poker.asd
-  (use :cl :asdf))
+  (:use :cl :asdf))
 
 (defsystem "poker"
   :name "poker"
@@ -9,4 +9,7 @@
   :depends-on (:iterate)
   :serial t
   :components
-  ((:file "poker")))
+  ((:file "card")
+   (:file "score")
+   (:file "poker")
+   ))
