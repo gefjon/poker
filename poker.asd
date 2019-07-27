@@ -6,10 +6,13 @@
   :version "0.0.0"
   :author "Arthur Goldman"
   :license "MIT"
-  :depends-on (:iterate)
+  :depends-on (:iterate
+                :sketch)
   :serial t
   :components
-  ((:file "card")
+  ((:file "package")
+   (:file "card")
+   (:file "hand")
    (:file "score")
-   (:file "poker")
-   ))
+   (:file "deck")
+   (:file "poker")))

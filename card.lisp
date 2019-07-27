@@ -1,14 +1,4 @@
-(defpackage :poker.card
-  (:use :cl)
-  (:nicknames :card)
-  (:export :suit
-           :face
-           :*face-byte-width*
-           :make-card
-           :card
-           :card-face
-           :card-suit))
-(in-package :poker.card)
+(in-package :poker)
 
 (deftype suit ()
   '(member
@@ -17,7 +7,7 @@
     :club
     :spade))
 
-(eval-when (:compile-toplevel)
+(eval-when (:compile-toplevel :load-toplevel :execute)
   (defparameter *face-byte-width* 8
     "Face values are represented internally as a byte, which allows
   scores to be represented as a byte-vector, or, interchangably, a

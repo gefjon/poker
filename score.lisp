@@ -1,11 +1,4 @@
-(defpackage :poker.score
-  (:use :cl :poker.card :iterate)
-  (:nicknames :score)
-  (:export :score
-           :hand
-           :sort-hand
-           :hand-score))
-(in-package :poker.score)
+(in-package :poker)
 
 (defmacro define-score-type (name &body bytes-in-increasing-order)
   "Define a type named NAME which encodes a score as a bignum, with
@@ -63,20 +56,6 @@ be passed to LDB and DPB."
   full-house
   4-of
   straight-flush)
-
-(deftype hand ()
-  '(vector card 5))
-
-(defun sort-hand (hand)
-  "sort HAND into a (VECTOR CARD 5), where the highest-faced card is
-at (AREF HAND 0) and the lowest-faced card is at (AREF HAND 4)"
-  (sort (coerce hand 'hand) #'> :key #'card-face))
-
-(defun sorted-hand-high-card (sorted-hand)
-  (aref sorted-hand 0))
-
-(defun sorted-hand-low-card (sorted-hand)
-  (aref sorted-hand 4))
 
 (declaim (ftype (function (hand)
                           list)
