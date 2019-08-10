@@ -52,3 +52,9 @@
     (replace-cards player game)
     (bet player game))
   (calculate-scores-and-choose-winner game))
+
+(defparameter *game* (make-instance 'poker-game))
+(defparameter *players* (poker-game-players *game*))
+(defparameter *gefjon* (aref *players* 0))
+(defparameter *baldur* (aref *players* 1))
+(defparameter *deck* (poker-game-deck *game*))

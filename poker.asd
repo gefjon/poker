@@ -8,12 +8,14 @@
   :license "MIT"
   :depends-on (:iterate
                 :sketch)
-  :serial t
   :components
-  ((:file "package")
-   (:file "card")
-   (:file "hand")
-   (:file "score")
-   (:file "deck")
-   (:file "player")
-   (:file "game")))
+  ((:file :package)
+   (:module :src
+            :depends-on (:package)
+            :components 
+            ((:file :card)
+             (:file :hand)
+             (:file :score)
+             (:file :deck)
+             (:file :player)
+             (:file :game)))))

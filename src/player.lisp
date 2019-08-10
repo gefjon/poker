@@ -8,7 +8,9 @@
 (declaim (ftype (function (player) money) player-cash-on-hand))
 
 (defclass player ()
-  ((hand :type hand
+  ((still-playing-p :accessor player-still-playing-p
+                    :initform nil)
+   (hand :type hand
          :initarg :player-hand
          :initform (make-hand)
          :accessor player-hand)
@@ -50,8 +52,7 @@
       (format iostream "~&enter an amount for ~a to bet: " player)
       (let ((amount (read iostream)))
         (check-type amount money)
-        (decf cash-on-hand amount)
-        (incf current-bet amount))))
+        (+ amount current-bet))))
 
 (defgeneric discard-cards (player))
 
@@ -59,7 +60,7 @@
   (with-slots (iostream) player
     (flet ((replace-card-p (card)
              (let ((*query-io* iostream))
-               (y-or-n-p "discard ~a?" card))))
+               (yes-or-no-p "discard ~a?" card))))
       (setf (player-hand player)
             (delete-if #'replace-card-p (player-hand player))))))
 
