@@ -15,4 +15,5 @@
    (:file "hand")
    (:file "score")
    (:file "deck")
-   (:file "poker")))
+   (:file "player")
+   (:file "game")))

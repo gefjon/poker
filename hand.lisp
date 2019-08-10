@@ -1,3 +1,5 @@
+(in-package :poker)
+
 (deftype hand ()
   '(vector (or null card) 5))
 
